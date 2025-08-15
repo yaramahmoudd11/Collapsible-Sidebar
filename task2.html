@@ -1,0 +1,355 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Task 2 – Responsive Contact Form</title>
+  <style>
+    :root{
+      --bg: #0b1020;
+      --panel: #0f172a;
+      --text: #e5e7eb;
+      --muted:#94a3b8;
+      --brand:#22d3ee;      /* cyan-400 */
+      --brand-2:#6366f1;    /* indigo-500 */
+      --border:#1f2937;
+      --error:#ef4444;      /* red-500 */
+      --success:#10b981;    /* emerald-500 */
+      --radius:16px;
+      --shadow:0 10px 20px rgba(0,0,0,.35), 0 6px 6px rgba(0,0,0,.25);
+      --gap:14px;
+    }
+    @media (prefers-color-scheme: light){
+      :root{
+        --bg:#f8fafc;        /* slate-50 */
+        --panel:#ffffff;
+        --text:#0f172a;      /* slate-900 */
+        --muted:#475569;     /* slate-600 */
+        --border:#e5e7eb;
+        --shadow:0 10px 20px rgba(0,0,0,.08), 0 6px 6px rgba(0,0,0,.06);
+      }
+    }
+
+    *{box-sizing:border-box}
+    html,body{height:100%}
+    body{
+      margin:0;
+      font-family: ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Ubuntu, Cantarell, "Noto Sans", "Helvetica Neue", Arial;
+      background:
+        radial-gradient(1200px 800px at 10% -10%, rgba(99,102,241,.18), transparent 40%),
+        radial-gradient(1000px 700px at 110% 10%, rgba(34,211,238,.15), transparent 45%),
+        var(--bg);
+      color:var(--text);
+    }
+
+    .wrap{
+      min-height:100dvh;
+      display:grid;
+      grid-template-rows:auto 1fr auto;
+    }
+
+    header{
+      position:sticky; top:0; z-index:10;
+      backdrop-filter: blur(8px);
+      background: color-mix(in hsl, var(--panel) 70%, transparent);
+      border-bottom:1px solid var(--border);
+      display:flex; align-items:center; gap:12px; justify-content:space-between;
+      padding:12px clamp(16px,3vw,36px);
+    }
+    .brand{
+      display:flex; align-items:center; gap:10px;
+      font-weight:800; letter-spacing:.3px;
+    }
+    .brand svg{width:28px;height:28px}
+
+    main{
+      display:grid; align-content:center; justify-items:center;
+      padding: clamp(16px, 3vw, 40px);
+    }
+
+    .grid{
+      width:min(100%, 1100px);
+      display:grid; gap:24px;
+      grid-template-columns: 1fr;
+    }
+    @media (min-width: 900px){
+      .grid{ grid-template-columns: 1.1fr .9fr; align-items: start; }
+    }
+
+    .panel{
+      background: var(--panel);
+      border:1px solid var(--border);
+      border-radius: var(--radius);
+      box-shadow: var(--shadow);
+    }
+
+    .form{
+      padding: clamp(16px, 3vw, 28px);
+    }
+
+    .form h1{ margin:0 0 6px; font-size: clamp(22px, 2.2vw, 30px); }
+    .subtitle{ margin:0 0 18px; color:var(--muted) }
+
+    .fields{ display:grid; gap: var(--gap); grid-template-columns: 1fr; }
+    @media (min-width: 700px){
+      .fields.cols-2{ grid-template-columns: 1fr 1fr; }
+    }
+
+    label{ font-weight:600; font-size:14px; display:block; margin-bottom:6px; }
+
+    .input, textarea{
+      width:100%;
+      padding:12px 14px; border-radius:12px; border:1px solid var(--border);
+      background: color-mix(in hsl, var(--panel) 60%, #0000);
+      color:var(--text);
+      outline:none;
+      transition:border-color .2s ease, box-shadow .2s ease;
+    }
+    .input:focus, textarea:focus{ border-color: color-mix(in srgb, var(--brand) 60%, var(--brand-2)); box-shadow: 0 0 0 3px color-mix(in srgb, var(--brand) 20%, transparent); }
+
+    .error-text{ font-size:12px; line-height:1.3; color: var(--error); margin-top:6px; min-height: 1.1em; }
+    .invalid{ border-color: var(--error) !important; box-shadow: 0 0 0 3px color-mix(in srgb, var(--error) 18%, transparent); }
+
+    .row{ display:grid; gap:6px; }
+
+    .actions{ display:flex; gap:10px; align-items:center; margin-top: 6px; }
+
+    .btn{
+      display:inline-flex; align-items:center; gap:10px;
+      border:1px solid var(--border);
+      background: linear-gradient(180deg, color-mix(in srgb, var(--brand) 28%, var(--panel)), color-mix(in srgb, var(--brand-2) 22%, var(--panel)));
+      color:#fff; font-weight:700; padding:12px 18px; border-radius:999px; cursor:pointer;
+      box-shadow: var(--shadow); transition: transform .18s ease, opacity .2s ease;
+    }
+    .btn:disabled{ opacity:.6; cursor:not-allowed; }
+    .btn:active{ transform: translateY(1px); }
+
+    .note{
+      padding: clamp(16px, 3vw, 28px);
+    }
+    .note h2{ margin:0 0 10px; font-size: clamp(18px, 2vw, 24px); }
+    .note p{ margin:0 0 10px; color:var(--muted); }
+    .bullet{ display:grid; gap:10px; margin:12px 0 0; padding:0; list-style:none; }
+    .bullet li{ display:flex; gap:10px; align-items:flex-start; }
+
+    .toast{ position: fixed; inset: auto 16px 16px auto; z-index: 100; padding: 12px 16px; border-radius: 12px; background: var(--panel); border:1px solid var(--border); box-shadow: var(--shadow); display:none }
+    .toast.ok{ display:block; border-color: color-mix(in srgb, var(--success) 60%, var(--border)); }
+    .toast.err{ display:block; border-color: color-mix(in srgb, var(--error) 60%, var(--border)); }
+
+    .req { color: var(--brand-2); font-weight: 700; margin-left: 6px; }
+    .sr-only{ position:absolute !important; width:1px; height:1px; padding:0; margin:-1px; overflow:hidden; clip:rect(0,0,0,0); white-space:nowrap; border:0; }
+  </style>
+</head>
+<body>
+  <div class="wrap">
+    <header>
+      <div class="brand" aria-label="TaskFlow contact form">
+        <svg viewBox="0 0 48 48" fill="none" aria-hidden="true">
+          <defs>
+            <linearGradient id="g" x1="0" y1="0" x2="1" y2="1">
+              <stop offset="0" stop-color="var(--brand)" />
+              <stop offset="1" stop-color="var(--brand-2)" />
+            </linearGradient>
+          </defs>
+          <rect x="4" y="4" width="40" height="40" rx="10" fill="url(#g)" />
+          <path d="M14 25l6 6 14-14" stroke="white" stroke-width="4" stroke-linecap="round" stroke-linejoin="round"/>
+        </svg>
+        <span>Task 2 – Contact Us</span>
+      </div>
+      <div aria-hidden="true" style="font-weight:700; letter-spacing:.2px; opacity:.8">Responsive • Accessible • Validated</div>
+    </header>
+
+    <main>
+      <div class="grid">
+        <!-- Form Panel -->
+        <section class="panel form" aria-labelledby="formTitle">
+          <h1 id="formTitle">Get in touch</h1>
+          <p class="subtitle">We usually reply within 1–2 business days. Fields marked with <span class="req" aria-hidden="true">*</span> are required.</p>
+
+          <form id="contactForm" novalidate>
+            <p id="formErrors" class="sr-only" aria-live="polite"></p>
+
+            <div class="fields cols-2">
+              <div class="row">
+                <label for="name">Full Name <span class="req" aria-hidden="true">*</span></label>
+                <input class="input" type="text" id="name" name="name" autocomplete="name" placeholder="e.g., Yara Mahmoud" required minlength="2" aria-describedby="nameErr" />
+                <div id="nameErr" class="error-text" role="alert" aria-live="polite"></div>
+              </div>
+
+              <div class="row">
+                <label for="email">Email Address <span class="req" aria-hidden="true">*</span></label>
+                <input class="input" type="email" id="email" name="email" autocomplete="email" placeholder="you@example.com" required aria-describedby="emailErr" />
+                <div id="emailErr" class="error-text" role="alert" aria-live="polite"></div>
+              </div>
+
+              <div class="row" style="grid-column: 1 / -1;">
+                <label for="subject">Subject <span class="req" aria-hidden="true">*</span></label>
+                <input class="input" type="text" id="subject" name="subject" placeholder="How can we help?" required minlength="3" aria-describedby="subjectErr" />
+                <div id="subjectErr" class="error-text" role="alert" aria-live="polite"></div>
+              </div>
+
+              <div class="row" style="grid-column: 1 / -1;">
+                <label for="message">Message <span class="req" aria-hidden="true">*</span></label>
+                <textarea id="message" name="message" class="input" rows="6" placeholder="Write your message here…" required minlength="10" aria-describedby="messageErr"></textarea>
+                <div id="messageErr" class="error-text" role="alert" aria-live="polite"></div>
+              </div>
+            </div>
+
+            <!-- honeypot for bots -->
+            <div class="sr-only" aria-hidden="true">
+              <label>Leave this empty<input type="text" name="website" tabindex="-1" autocomplete="off" /></label>
+            </div>
+
+            <div class="actions">
+              <button class="btn" type="submit" id="submitBtn">
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M22 2L11 13"/><path d="M22 2l-7 20-4-9-9-4 20-7z"/></svg>
+                Send message
+              </button>
+              <span id="helper" class="subtitle" aria-live="polite"></span>
+            </div>
+          </form>
+        </section>
+
+        <!-- Info Panel -->
+        <aside class="panel note" aria-labelledby="infoTitle">
+          <h2 id="infoTitle">What this task checks</h2>
+          <p>Clean layout, responsive design, form semantics, and JavaScript validation.</p>
+          <ul class="bullet">
+            <li>
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M20 6L9 17l-5-5"/></svg>
+              Semantic HTML with labels tied to inputs and helpful placeholders.
+            </li>
+            <li>
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M3 12h18"/><path d="M3 6h18"/><path d="M3 18h18"/></svg>
+              Responsive spacing and grid—works on phones to desktops.
+            </li>
+            <li>
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M12 20v-6"/><path d="M6 12l6-8 6 8"/></svg>
+              Accessible error feedback via <code>aria-live</code> and <code>aria-invalid</code>.
+            </li>
+            <li>
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><circle cx="12" cy="12" r="10"/><path d="M12 16v-4"/><path d="M12 8h.01"/></svg>
+              Basic spam prevention with a hidden honeypot field.
+            </li>
+          </ul>
+        </aside>
+      </div>
+    </main>
+
+    <footer style="padding:12px clamp(16px,3vw,36px); color:var(--muted); border-top:1px solid var(--border);">
+      © 2025 • Task 2 Demo • Built with plain HTML/CSS/JS
+    </footer>
+  </div>
+
+  <div id="toast" class="toast" role="status" aria-live="polite"></div>
+
+  <script>
+    (function(){
+      const form = document.getElementById('contactForm');
+      const btn  = document.getElementById('submitBtn');
+      const toast = document.getElementById('toast');
+      const helper = document.getElementById('helper');
+
+      const fields = {
+        name:    { el: document.getElementById('name'),    err: document.getElementById('nameErr') },
+        email:   { el: document.getElementById('email'),   err: document.getElementById('emailErr') },
+        subject: { el: document.getElementById('subject'), err: document.getElementById('subjectErr') },
+        message: { el: document.getElementById('message'), err: document.getElementById('messageErr') },
+      };
+
+      const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/i;
+
+      function setError(field, message){
+        field.el.classList.add('invalid');
+        field.el.setAttribute('aria-invalid', 'true');
+        field.err.textContent = message;
+      }
+      function clearError(field){
+        field.el.classList.remove('invalid');
+        field.el.removeAttribute('aria-invalid');
+        field.err.textContent = '';
+      }
+
+      function validate(){
+        let ok = true;
+
+        // Full name
+        const name = fields.name.el.value.trim();
+        if(!name){ ok = false; setError(fields.name, 'Full name is required.'); }
+        else if(name.length < 2){ ok = false; setError(fields.name, 'Please enter at least 2 characters.'); }
+        else clearError(fields.name);
+
+        // Email
+        const email = fields.email.el.value.trim();
+        if(!email){ ok = false; setError(fields.email, 'Email is required.'); }
+        else if(!EMAIL_RE.test(email)){ ok = false; setError(fields.email, 'Please enter a valid email (e.g., name@example.com).'); }
+        else clearError(fields.email);
+
+        // Subject
+        const subject = fields.subject.el.value.trim();
+        if(!subject){ ok = false; setError(fields.subject, 'Subject is required.'); }
+        else if(subject.length < 3){ ok = false; setError(fields.subject, 'Subject should be at least 3 characters.'); }
+        else clearError(fields.subject);
+
+        // Message
+        const message = fields.message.el.value.trim();
+        if(!message){ ok = false; setError(fields.message, 'Message is required.'); }
+        else if(message.length < 10){ ok = false; setError(fields.message, 'Message should be at least 10 characters.'); }
+        else clearError(fields.message);
+
+        return ok;
+      }
+
+      function firstError(){
+        const first = document.querySelector('.invalid');
+        if(first){ first.focus({preventScroll:true}); first.scrollIntoView({behavior:'smooth', block:'center'}); }
+      }
+
+      function showToast(kind, text){
+        toast.className = 'toast ' + (kind === 'ok' ? 'ok' : 'err');
+        toast.textContent = text;
+        clearTimeout(showToast.tid);
+        showToast.tid = setTimeout(() => { toast.className = 'toast'; toast.textContent = ''; }, 3500);
+      }
+
+      // Re-validate on input
+      Object.values(fields).forEach(f => {
+        f.el.addEventListener('input', () => {
+          if(f.el.classList.contains('invalid')) validate();
+        });
+      });
+
+      form.addEventListener('submit', async (e) => {
+        e.preventDefault();
+        helper.textContent = '';
+
+        const ok = validate();
+        if(!ok){ firstError(); showToast('err', 'Please fix the highlighted fields.'); return; }
+
+        // simple honeypot
+        const hp = form.querySelector('input[name="website"]');
+        if(hp && hp.value){ showToast('ok', 'Thanks! If you are human, please leave the hidden field empty.'); return; }
+
+        // fake async submit
+        try {
+          btn.disabled = true; btn.setAttribute('aria-busy','true'); helper.textContent = 'Sending…';
+          // simulate network delay
+          await new Promise(r => setTimeout(r, 900));
+
+          // Reset form after success
+          form.reset();
+          Object.values(fields).forEach(clearError);
+          helper.textContent = '';
+          showToast('ok', 'Message sent successfully!');
+          btn.blur();
+        } catch(err){
+          console.error(err);
+          showToast('err', 'Something went wrong. Please try again.');
+        } finally {
+          btn.disabled = false; btn.removeAttribute('aria-busy');
+        }
+      });
+    })();
+  </script>
+</body>
+</html>

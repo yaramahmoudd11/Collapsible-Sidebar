@@ -1,0 +1,347 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>TaskFlow – Organize your day beautifully</title>
+  <meta name="description" content="TaskFlow helps you capture tasks, plan your day, and get more done with less stress." />
+  <style>
+    :root{
+      --bg: #0b1020;
+      --surface:#0f172a;
+      --soft:#111827;
+      --text:#e5e7eb;
+      --muted:#94a3b8;
+      --brand:#22d3ee;      /* cyan-400 */
+      --brand-2:#6366f1;    /* indigo-500 */
+      --border:#1f2937;
+      --radius: 18px;
+      --shadow: 0 20px 40px rgba(0,0,0,.35), 0 8px 16px rgba(0,0,0,.25);
+      --card-shadow: 0 10px 20px rgba(0,0,0,.22), 0 4px 10px rgba(0,0,0,.18);
+      --mx: clamp(16px, 4vw, 56px);
+      --section-gap: clamp(48px, 12vw, 120px);
+    }
+    @media (prefers-color-scheme: light){
+      :root{
+        --bg:#f8fafc;        /* slate-50 */
+        --surface:#ffffff;
+        --soft:#ffffff;
+        --text:#0f172a;      /* slate-900 */
+        --muted:#475569;     /* slate-600 */
+        --border:#e5e7eb;
+        --shadow: 0 20px 40px rgba(0,0,0,.08), 0 8px 16px rgba(0,0,0,.06);
+        --card-shadow: 0 10px 20px rgba(0,0,0,.07), 0 4px 10px rgba(0,0,0,.06);
+      }
+    }
+
+    *{box-sizing:border-box}
+    html,body{height:100%}
+    body{
+      margin:0;
+      font-family: ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Ubuntu, Cantarell, "Noto Sans", "Helvetica Neue", Arial;
+      background:
+        radial-gradient(1200px 800px at 10% -10%, rgba(99,102,241,.18), transparent 40%),
+        radial-gradient(1000px 700px at 110% 10%, rgba(34,211,238,.15), transparent 45%),
+        var(--bg);
+      color:var(--text);
+      -webkit-font-smoothing: antialiased;
+      -moz-osx-font-smoothing: grayscale;
+    }
+
+    /* Header */
+    .nav{
+      position: sticky; top: 0; z-index: 50;
+      backdrop-filter: blur(10px);
+      background: color-mix(in hsl, var(--soft) 70%, transparent);
+      border-bottom: 1px solid var(--border);
+      display:flex; align-items:center; gap:16px; justify-content:space-between;
+      padding: 10px var(--mx);
+    }
+    .brand{ display:flex; align-items:center; gap:10px; font-weight:800; letter-spacing:.3px; }
+    .brand svg{ width:28px; height:28px; }
+    .nav > .actions{ display:flex; gap:10px; }
+
+    .btn{ display:inline-flex; align-items:center; gap:10px; cursor:pointer; border-radius: 999px; border:1px solid var(--border); padding:10px 16px; font-weight:700; }
+    .btn.primary{ color:#fff; background: linear-gradient(180deg, color-mix(in srgb, var(--brand) 30%, var(--soft)), color-mix(in srgb, var(--brand-2) 24%, var(--soft))); box-shadow: var(--card-shadow); }
+    .btn.ghost{ color:var(--text); background: linear-gradient(180deg, rgba(255,255,255,.06), rgba(255,255,255,.02)); }
+
+    /* Sections */
+    section{ padding: var(--section-gap) var(--mx); }
+    .container{ max-width: 1200px; margin: 0 auto; }
+
+    /* Hero */
+    .hero{ padding-top: calc(var(--section-gap) * .8); display:grid; place-items:center; text-align:center; }
+    .hero h1{ margin: 0 0 12px; font-size: clamp(28px, 5vw, 56px); line-height: 1.05; }
+    .hero p{ margin: 0 0 18px; color:var(--muted); font-size: clamp(16px, 2.4vw, 18px); }
+    .hero .cta{ display:flex; gap:12px; flex-wrap:wrap; justify-content:center; margin-top: 12px; }
+
+    .hero-card{
+      --pad: clamp(14px, 3vw, 22px);
+      display:grid; gap:10px; grid-template-columns: 1fr;
+      background: var(--surface); border:1px solid var(--border); border-radius: var(--radius);
+      box-shadow: var(--shadow); padding: var(--pad);
+      max-width: 900px; margin: 28px auto 0;
+    }
+
+    .meta{ display:flex; flex-wrap:wrap; gap:8px; justify-content:center; color:var(--muted); font-size:14px; }
+
+    /* Features */
+    .features{ background: linear-gradient(180deg, color-mix(in srgb, var(--brand) 4%, var(--bg)), var(--bg)); }
+    .cards{ display:grid; grid-template-columns: repeat(12, 1fr); gap: 16px; }
+    .card{ grid-column: span 12; background: var(--surface); border:1px solid var(--border); border-radius: 16px; padding: 18px; box-shadow: var(--card-shadow); display:grid; gap:10px; }
+    .card .icon{ width: 36px; height: 36px; }
+    .card h3{ margin:0; font-size: clamp(18px,2.4vw,22px); }
+    .card p{ margin:0; color:var(--muted); }
+    @media (min-width: 800px){ .card{ grid-column: span 4; } }
+
+    /* Testimonials */
+    .testi-grid{ display:grid; gap:16px; grid-template-columns: repeat(12, 1fr); }
+    .quote{ grid-column: span 12; background: var(--surface); border:1px solid var(--border); border-radius: 16px; padding: 18px; box-shadow: var(--card-shadow); }
+    .quote p{ margin:0 0 8px; font-size: clamp(16px, 2.4vw, 18px); }
+    .who{ color:var(--muted); font-size:14px; }
+    @media (min-width: 900px){ .quote{ grid-column: span 4; } }
+
+    /* Pricing */
+    .pricing-grid{ display:grid; gap:16px; grid-template-columns: repeat(12, 1fr); align-items: stretch; }
+    .plan{ grid-column: span 12; display:grid; gap:12px; background: var(--surface); border:1px solid var(--border); border-radius: 18px; padding: 20px; box-shadow: var(--card-shadow); }
+    @media (min-width: 900px){ .plan{ grid-column: span 4; } }
+    .price{ font-size: clamp(26px, 4vw, 36px); font-weight: 800; }
+    .ul{ list-style: none; margin: 6px 0 0; padding: 0; display:grid; gap:8px; color:var(--muted); }
+
+    /* Footer */
+    footer{ padding: 22px var(--mx); border-top: 1px solid var(--border); color: var(--muted); display:flex; flex-wrap:wrap; gap:10px; justify-content:space-between; align-items:center; }
+
+    /* Scroll-reveal animation */
+    .reveal{ opacity: 0; transform: translateY(14px) scale(.98); filter: blur(2px); }
+    .reveal.show{ opacity: 1; transform: translateY(0) scale(1); filter: none; transition: opacity .6s cubic-bezier(.2,.8,.2,1), transform .6s cubic-bezier(.2,.8,.2,1), filter .6s; }
+
+    /* Anchor buttons smooth scroll */
+    html{ scroll-behavior: smooth; }
+
+    /* Reduced motion */
+    @media (prefers-reduced-motion: reduce){
+      .reveal, .reveal.show{ transition: none !important; transform: none !important; filter: none !important; }
+      html{ scroll-behavior: auto; }
+    }
+  </style>
+</head>
+<body>
+  <!-- Navigation -->
+  <header class="nav">
+    <a href="#top" class="brand">
+      <svg viewBox="0 0 48 48" fill="none" aria-hidden="true">
+        <defs>
+          <linearGradient id="g" x1="0" y1="0" x2="1" y2="1">
+            <stop offset="0" stop-color="var(--brand)" />
+            <stop offset="1" stop-color="var(--brand-2)" />
+          </linearGradient>
+        </defs>
+        <rect x="4" y="4" width="40" height="40" rx="10" fill="url(#g)" />
+        <path d="M14 25l6 6 14-14" stroke="white" stroke-width="4" stroke-linecap="round" stroke-linejoin="round"/>
+      </svg>
+      <span>TaskFlow</span>
+    </a>
+    <nav aria-label="Primary">
+      <div class="actions">
+        <a class="btn ghost" href="#features">Features</a>
+        <a class="btn ghost" href="#pricing">Pricing</a>
+        <a class="btn primary" href="#cta">Get Started</a>
+      </div>
+    </nav>
+  </header>
+
+  <!-- Hero -->
+  <main id="top">
+    <section class="hero">
+      <div class="container reveal">
+        <h1>Organize your tasks, focus your day.</h1>
+        <p>TaskFlow is a lightweight task manager that helps you plan, track, and finish what matters. Beautifully simple. Surprisingly powerful.</p>
+        <div class="cta">
+          <a class="btn primary" href="#pricing">Try Free</a>
+          <a class="btn ghost" href="#features">See Features</a>
+        </div>
+
+        <div class="hero-card" role="img" aria-label="TaskFlow interface preview placeholder">
+          <div style="display:grid; gap:10px; grid-template-columns: 1fr 1fr;">
+            <div style="background:var(--soft); border:1px solid var(--border); border-radius:12px; padding:14px; display:grid; gap:8px;">
+              <div style="display:flex; align-items:center; justify-content:space-between;">
+                <strong>Today</strong>
+                <span style="color:var(--muted)">3 tasks</span>
+              </div>
+              <div style="display:grid; gap:8px;">
+                <label style="display:flex; align-items:center; gap:8px">
+                  <input type="checkbox" checked aria-label="Morning run" />
+                  <span>Morning run</span>
+                </label>
+                <label style="display:flex; align-items:center; gap:8px">
+                  <input type="checkbox" aria-label="Finish report" />
+                  <span>Finish report</span>
+                </label>
+                <label style="display:flex; align-items:center; gap:8px">
+                  <input type="checkbox" aria-label="Call with team" />
+                  <span>Call with team</span>
+                </label>
+              </div>
+            </div>
+            <div style="background:var(--soft); border:1px solid var(--border); border-radius:12px; padding:14px; display:grid; gap:10px;">
+              <div style="display:flex; align-items:center; justify-content:space-between;">
+                <strong>Focus timer</strong>
+                <span style="color:var(--muted)">25:00</span>
+              </div>
+              <div style="height: 10px; background: color-mix(in srgb, var(--brand) 25%, var(--soft)); border-radius: 999px; overflow:hidden;">
+                <div style="height:100%; width: 65%; background: linear-gradient(90deg, var(--brand), var(--brand-2));"></div>
+              </div>
+              <button class="btn primary" style="justify-content:center">Start Session</button>
+            </div>
+          </div>
+          <div class="meta">
+            <span>✔️ No sign-up required</span>
+            <span>⚡ Loads fast</span>
+            <span>📱 Works on any device</span>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- Features -->
+    <section id="features" class="features">
+      <div class="container">
+        <header class="reveal" style="text-align:center; margin-bottom:18px;">
+          <h2 style="margin:0 0 8px; font-size: clamp(22px, 4vw, 36px);">Everything you need to get things done</h2>
+          <p style="margin:0; color:var(--muted)">Three focused features—no bloat, just flow.</p>
+        </header>
+        <div class="cards">
+          <article class="card reveal">
+            <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M9 12l2 2 4-4"/><path d="M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+            <h3>Smart lists</h3>
+            <p>Auto-group tasks by due date and priority so you always see what matters next.</p>
+          </article>
+          <article class="card reveal">
+            <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/></svg>
+            <h3>Boards & timeline</h3>
+            <p>Drag-and-drop boards with a simple schedule so teams can track work at a glance.</p>
+          </article>
+          <article class="card reveal">
+            <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M12 8v8"/><path d="M8 12h8"/><circle cx="12" cy="12" r="10"/></svg>
+            <h3>Focus mode</h3>
+            <p>Block distractions with a built-in timer and ambient sounds to keep you in flow.</p>
+          </article>
+        </div>
+      </div>
+    </section>
+
+    <!-- Testimonials -->
+    <section id="reviews">
+      <div class="container">
+        <header class="reveal" style="text-align:center; margin-bottom:18px;">
+          <h2 style="margin:0 0 8px; font-size: clamp(22px, 4vw, 36px);">Loved by focused humans</h2>
+          <p style="margin:0; color:var(--muted)">Real words from delightfully productive people.</p>
+        </header>
+        <div class="testi-grid">
+          <figure class="quote reveal">
+            <p>“TaskFlow replaced three different apps for me. Planning my day is now the easiest part.”</p>
+            <figcaption class="who">— Huda A., Product Designer</figcaption>
+          </figure>
+          <figure class="quote reveal">
+            <p>“Clean, fast, and actually calming to use. I finish more and stress less.”</p>
+            <figcaption class="who">— Omar M., CS Student</figcaption>
+          </figure>
+          <figure class="quote reveal">
+            <p>“The focus timer is my secret weapon during exams. Simple and effective.”</p>
+            <figcaption class="who">— Sara K., Engineer</figcaption>
+          </figure>
+        </div>
+      </div>
+    </section>
+
+    <!-- Pricing -->
+    <section id="pricing">
+      <div class="container">
+        <header class="reveal" style="text-align:center; margin-bottom:18px;">
+          <h2 style="margin:0 0 8px; font-size: clamp(22px, 4vw, 36px);">Pick your plan</h2>
+          <p style="margin:0; color:var(--muted)">Start free. Upgrade when you’re ready.</p>
+        </header>
+        <div class="pricing-grid">
+          <article class="plan reveal" aria-labelledby="p1">
+            <div style="display:flex; align-items:baseline; justify-content:space-between; gap:10px;">
+              <h3 id="p1" style="margin:0">Free</h3>
+              <div class="price">$0</div>
+            </div>
+            <ul class="ul">
+              <li>Up to 2 projects</li>
+              <li>Basic lists & reminders</li>
+              <li>Sync across devices</li>
+            </ul>
+            <a class="btn ghost" href="#cta">Get Free</a>
+          </article>
+
+          <article class="plan reveal" aria-labelledby="p2" style="border-width:2px; border-color: color-mix(in srgb, var(--brand-2) 60%, var(--border));">
+            <div style="display:flex; align-items:baseline; justify-content:space-between; gap:10px;">
+              <h3 id="p2" style="margin:0">Pro</h3>
+              <div class="price">$6<span style="font-size:.6em">/mo</span></div>
+            </div>
+            <ul class="ul">
+              <li>Unlimited projects</li>
+              <li>Boards & timeline</li>
+              <li>Focus mode + stats</li>
+            </ul>
+            <a class="btn primary" href="#cta">Start Pro</a>
+          </article>
+
+          <article class="plan reveal" aria-labelledby="p3">
+            <div style="display:flex; align-items:baseline; justify-content:space-between; gap:10px;">
+              <h3 id="p3" style="margin:0">Team</h3>
+              <div class="price">$12<span style="font-size:.6em">/user</span></div>
+            </div>
+            <ul class="ul">
+              <li>Team workspaces</li>
+              <li>Roles & permissions</li>
+              <li>Export & integrations</li>
+            </ul>
+            <a class="btn ghost" href="#cta">Contact Sales</a>
+          </article>
+        </div>
+      </div>
+    </section>
+
+    <!-- CTA -->
+    <section id="cta" style="padding-bottom: calc(var(--section-gap) * 1.2);">
+      <div class="container">
+        <div class="reveal" style="text-align:center; background: var(--surface); border:1px solid var(--border); border-radius: var(--radius); padding: clamp(18px, 4vw, 32px); box-shadow: var(--shadow);">
+          <h2 style="margin:0 0 8px; font-size: clamp(22px, 4vw, 34px);">Ready to get in flow?</h2>
+          <p style="margin:0 0 14px; color:var(--muted)">Join thousands organizing their day with TaskFlow.</p>
+          <div class="cta">
+            <button class="btn primary" onclick="alert('Demo action – hook your signup here!')">Create your free account</button>
+            <a class="btn ghost" href="#top">Back to top</a>
+          </div>
+        </div>
+      </div>
+    </section>
+  </main>
+
+  <footer>
+    <small>© 2025 TaskFlow</small>
+    <nav aria-label="Footer">
+      <a class="btn ghost" href="#features" style="padding:6px 10px;">Features</a>
+      <a class="btn ghost" href="#pricing" style="padding:6px 10px;">Pricing</a>
+      <a class="btn ghost" href="#cta" style="padding:6px 10px;">Get Started</a>
+    </nav>
+  </footer>
+
+  <script>
+    // IntersectionObserver-powered scroll reveal
+    (function(){
+      const items = document.querySelectorAll('.reveal');
+      const io = new IntersectionObserver((entries) => {
+        entries.forEach((e) => {
+          if(e.isIntersecting){
+            e.target.classList.add('show');
+            io.unobserve(e.target); // reveal once
+          }
+        });
+      }, { threshold: 0.15 });
+      items.forEach(el => io.observe(el));
+    })();
+  </script>
+</body>
+</html>

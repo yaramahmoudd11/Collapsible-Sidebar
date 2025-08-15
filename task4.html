@@ -1,0 +1,331 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>MyBlog — Thoughts on Tech, Travel & Food</title>
+  <meta name="description" content="A clean, responsive blog homepage with cards, category filter, search, and pagination (vanilla JS)." />
+  <style>
+    :root{
+      --bg:#0b1020;          /* page background */
+      --surface:#0f172a;     /* cards/panels */
+      --soft:#111827;        /* soft panels */
+      --text:#e5e7eb;        /* main text */
+      --muted:#94a3b8;       /* secondary text */
+      --brand:#22d3ee;       /* cyan */
+      --brand-2:#6366f1;     /* indigo */
+      --accent:#f59e0b;      /* amber */
+      --danger:#ef4444;      /* red */
+      --border:#1f2937;      /* lines */
+      --radius:16px;
+      --mx: clamp(16px, 4vw, 60px);
+      --shadow: 0 20px 40px rgba(0,0,0,.35), 0 8px 16px rgba(0,0,0,.25);
+      --card-shadow: 0 10px 20px rgba(0,0,0,.22), 0 4px 10px rgba(0,0,0,.18);
+    }
+    @media (prefers-color-scheme: light){
+      :root{
+        --bg:#f8fafc; --surface:#ffffff; --soft:#ffffff; --text:#0f172a; --muted:#475569; --border:#e5e7eb;
+        --shadow: 0 20px 40px rgba(0,0,0,.08), 0 8px 16px rgba(0,0,0,.06);
+        --card-shadow: 0 10px 20px rgba(0,0,0,.07), 0 4px 10px rgba(0,0,0,.06);
+      }
+    }
+    *{box-sizing:border-box}
+    html,body{height:100%}
+    body{
+      margin:0;
+      font-family: ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Ubuntu, Cantarell, "Noto Sans", "Helvetica Neue", Arial;
+      background:
+        radial-gradient(1200px 800px at 10% -10%, rgba(99,102,241,.18), transparent 40%),
+        radial-gradient(1000px 700px at 110% 10%, rgba(34,211,238,.15), transparent 45%),
+        var(--bg);
+      color:var(--text);
+      -webkit-font-smoothing: antialiased; -moz-osx-font-smoothing: grayscale;
+    }
+
+    /* Header */
+    header{
+      position: sticky; top: 0; z-index: 50;
+      backdrop-filter: blur(10px);
+      background: color-mix(in hsl, var(--soft) 70%, transparent);
+      border-bottom:1px solid var(--border);
+      padding: 12px var(--mx);
+      display:flex; align-items:center; justify-content:space-between; gap:12px; flex-wrap:wrap;
+    }
+    .brand{ display:flex; align-items:center; gap:10px; font-weight:800; letter-spacing:.3px; }
+    .brand svg{ width:28px; height:28px; }
+
+    .controls{ display:flex; align-items:center; gap:10px; flex: 1 1 380px; justify-content:flex-end; flex-wrap:wrap; }
+    .search{ position:relative; min-width:260px; flex: 1 1 320px; }
+    .search input{
+      width:100%; padding:12px 40px 12px 14px; border-radius:999px; border:1px solid var(--border);
+      background: linear-gradient(180deg, rgba(255,255,255,.06), rgba(255,255,255,.02)); color:var(--text);
+    }
+    .search svg{ position:absolute; right:12px; top:50%; transform: translateY(-50%); opacity:.7 }
+
+    /* Category bar */
+    .catbar{ padding: 14px var(--mx); border-bottom:1px solid var(--border); display:flex; gap:8px; flex-wrap:wrap; align-items:center; }
+    .pill{
+      display:inline-flex; align-items:center; gap:8px; padding:8px 14px; border-radius: 999px; cursor:pointer;
+      border:1px solid var(--border); color: var(--text); background: linear-gradient(180deg, rgba(255,255,255,.06), rgba(255,255,255,.02));
+      user-select:none; transition: transform .15s ease;
+    }
+    .pill:hover{ transform: translateY(-1px); }
+    .pill.active{ background: linear-gradient(90deg, var(--brand), var(--brand-2)); color:#fff; border-color: transparent; box-shadow: var(--card-shadow); }
+
+    /* Layout */
+    main{ padding: 22px var(--mx) 30px; }
+    .meta{ display:flex; align-items:center; gap:10px; color:var(--muted); flex-wrap:wrap; }
+
+    .grid{ display:grid; gap: 16px; grid-template-columns: repeat(12, 1fr); }
+    .card{ grid-column: span 12; background: var(--surface); border:1px solid var(--border); border-radius: var(--radius); overflow:hidden; box-shadow: var(--card-shadow); display:grid; grid-template-rows: 180px auto; }
+    @media (min-width: 700px){ .card{ grid-column: span 6; } }
+    @media (min-width: 1000px){ .card{ grid-column: span 4; } }
+
+    .img{ position:relative; background: #0b1220; }
+    .img img{ position:absolute; inset:0; width:100%; height:100%; object-fit:cover; }
+    .badge{
+      position:absolute; left:10px; top:10px; padding:6px 10px; border-radius:999px; font-size:12px; font-weight:700; letter-spacing:.2px;
+      background: linear-gradient(90deg, var(--brand), var(--brand-2)); color:#fff; box-shadow: var(--card-shadow);
+    }
+
+    .content{ padding: 14px; display:grid; gap:10px; }
+    .title{ margin:0; font-size: clamp(16px, 2.4vw, 20px); }
+    .excerpt{ margin:0; color:var(--muted); font-size: 14px; }
+    .row{ display:flex; justify-content:space-between; align-items:center; gap:8px; color:var(--muted); font-size: 13px; }
+
+    /* Pagination */
+    .pagi{ display:flex; flex-wrap:wrap; gap:8px; align-items:center; justify-content:center; padding: 18px 0; }
+    .page{
+      min-width:36px; height:36px; display:grid; place-items:center; padding:0 10px; border-radius:999px; border:1px solid var(--border);
+      background: linear-gradient(180deg, rgba(255,255,255,.06), rgba(255,255,255,.02)); color:var(--text); cursor:pointer; user-select:none;
+    }
+    .page[disabled]{ opacity:.5; cursor:not-allowed; }
+    .page.active{ background: linear-gradient(90deg, var(--brand), var(--brand-2)); color:#fff; border-color: transparent; box-shadow: var(--card-shadow); }
+
+    footer{ padding: 14px var(--mx); border-top:1px solid var(--border); color:var(--muted); display:flex; justify-content:space-between; flex-wrap:wrap; gap:8px; }
+
+    .sr-only{ position:absolute !important; width:1px; height:1px; padding:0; margin:-1px; overflow:hidden; clip:rect(0,0,0,0); white-space:nowrap; border:0; }
+  </style>
+</head>
+<body>
+  <header>
+    <div class="brand">
+      <svg viewBox="0 0 48 48" fill="none" aria-hidden="true">
+        <defs>
+          <linearGradient id="g" x1="0" y1="0" x2="1" y2="1">
+            <stop offset="0" stop-color="var(--brand)" />
+            <stop offset="1" stop-color="var(--brand-2)" />
+          </linearGradient>
+        </defs>
+        <rect x="4" y="4" width="40" height="40" rx="10" fill="url(#g)" />
+        <path d="M14 25l6 6 14-14" stroke="white" stroke-width="4" stroke-linecap="round" stroke-linejoin="round"/>
+      </svg>
+      <span>MyBlog</span>
+    </div>
+
+    <div class="controls">
+      <div class="search" role="search">
+        <label class="sr-only" for="q">Search posts</label>
+        <input id="q" type="search" placeholder="Search posts… (title only)" autocomplete="off" />
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><circle cx="11" cy="11" r="8"/><path d="M21 21l-3.5-3.5"/></svg>
+      </div>
+      <div>
+        <label class="sr-only" for="per">Posts per page</label>
+        <select id="per" aria-label="Posts per page" style="padding:10px 12px; border-radius:999px; border:1px solid var(--border); background: linear-gradient(180deg, rgba(255,255,255,.06), rgba(255,255,255,.02)); color:var(--text);">
+          <option value="6" selected>6 / page</option>
+          <option value="9">9 / page</option>
+          <option value="12">12 / page</option>
+        </select>
+      </div>
+    </div>
+  </header>
+
+  <nav class="catbar" aria-label="Categories">
+    <button class="pill active" data-cat="All">All</button>
+    <button class="pill" data-cat="Tech">Tech</button>
+    <button class="pill" data-cat="Travel">Travel</button>
+    <button class="pill" data-cat="Food">Food</button>
+  </nav>
+
+  <main>
+    <div class="meta" id="meta"></div>
+    <section class="grid" id="grid" aria-live="polite" aria-busy="false"></section>
+    <nav class="pagi" id="pagi" aria-label="Pagination"></nav>
+  </main>
+
+  <footer>
+    <small>© 2025 MyBlog • Demo homepage</small>
+    <small id="footInfo"></small>
+  </footer>
+
+  <template id="cardTpl">
+    <article class="card">
+      <div class="img">
+        <span class="badge" data-badge></span>
+        <img data-img alt="" loading="lazy" />
+      </div>
+      <div class="content">
+        <h3 class="title" data-title></h3>
+        <p class="excerpt" data-excerpt></p>
+        <div class="row">
+          <time data-date></time>
+          <span data-read></span>
+        </div>
+      </div>
+    </article>
+  </template>
+
+  <script>
+    // --- Demo Data ----------------------------------------------------------
+    const POSTS = [
+      {id:1,  title:'Building a REST API with FastAPI', cat:'Tech',   date:'2025-08-02', read:6,  img:'https://images.unsplash.com/photo-1518779578993-ec3579fee39f?q=80&w=1600&auto=format&fit=crop', excerpt:'A friendly walkthrough to spin up a well-typed, blazing-fast Python API.'},
+      {id:2,  title:'Weekend in Aswan: Nubian vibes',    cat:'Travel', date:'2025-07-18', read:4,  img:'https://images.unsplash.com/photo-1500530855697-b586d89ba3ee?q=80&w=1600&auto=format&fit=crop', excerpt:'Sail the Nile, sip karkadeh, and watch golden sunsets from Elephantine.'},
+      {id:3,  title:'7 CSS layout tricks using Grid',    cat:'Tech',   date:'2025-06-29', read:5,  img:'https://images.unsplash.com/photo-1555066931-4365d14bab8c?q=80&w=1600&auto=format&fit=crop', excerpt:'From equal-height cards to Holy Grail layouts with a few elegant lines.'},
+      {id:4,  title:'Koshary at Home: Ultimate Guide',   cat:'Food',   date:'2025-05-14', read:8,  img:'https://images.unsplash.com/photo-1544025162-d76694265947?q=80&w=1600&auto=format&fit=crop', excerpt:'Layers of carbs, crispy onions, and a tangy tomatillo-ish sauce. Yum.'},
+      {id:5,  title:'Road-tripping Sinai: What to pack', cat:'Travel', date:'2025-04-05', read:7,  img:'https://images.unsplash.com/photo-1526778548025-fa2f459cd5c1?q=80&w=1600&auto=format&fit=crop', excerpt:'From reef shoes to power banks—pack smart for Dahab, Nuweiba, and beyond.'},
+      {id:6,  title:'TypeScript Type Gym: 10 drills',    cat:'Tech',   date:'2025-03-21', read:9,  img:'https://images.unsplash.com/photo-1519389950473-47ba0277781c?q=80&w=1600&auto=format&fit=crop', excerpt:'Sharpen your generics, unions, and narrowing with quick practice reps.'},
+      {id:7,  title:'Cairo’s Best Falafel Spots',        cat:'Food',   date:'2025-03-10', read:3,  img:'https://images.unsplash.com/photo-1604908554049-b02e1aa29f74?q=80&w=1600&auto=format&fit=crop', excerpt:'From Garden City to Heliopolis—where to get the crispiest ta3meyya.'},
+      {id:8,  title:'Deploying on Vercel like a pro',     cat:'Tech',   date:'2025-02-28', read:6,  img:'https://images.unsplash.com/photo-1518770660439-4636190af475?q=80&w=1600&auto=format&fit=crop', excerpt:'Preview branches, env vars, image optimization, and edge caching 101.'},
+      {id:9,  title:'Hidden gems in Luxor',              cat:'Travel', date:'2025-02-12', read:4,  img:'https://images.unsplash.com/photo-1524499982521-1ffd58dd89ea?q=80&w=1600&auto=format&fit=crop', excerpt:'Beyond the big temples: artisan souqs, felucca loops, and cafes.'},
+      {id:10, title:'Sourdough pita: crisp pockets',      cat:'Food',   date:'2025-01-22', read:5,  img:'https://images.unsplash.com/photo-1526318472351-c75fcf070305?q=80&w=1600&auto=format&fit=crop', excerpt:'The science behind airy pockets and that irresistible chew.'},
+      {id:11, title:'React Server Components mental model',cat:'Tech',  date:'2024-12-30', read:7,  img:'https://images.unsplash.com/photo-1522071820081-009f0129c71c?q=80&w=1600&auto=format&fit=crop', excerpt:'Think data, not effects: how RSC changes what goes where.'},
+      {id:12, title:'Alexandria seaside walk',            cat:'Travel', date:'2024-12-10', read:3,  img:'https://images.unsplash.com/photo-1526779259212-939e64788e3c?q=80&w=1600&auto=format&fit=crop', excerpt:'Corniche breezes, Bibliotheca views, and late-night fish markets.'},
+      {id:13, title:'Perfect Basbousa at home',           cat:'Food',   date:'2024-11-04', read:4,  img:'https://images.unsplash.com/photo-1478147427282-58a87a120781?q=80&w=1600&auto=format&fit=crop', excerpt:'Ghee vs. butter, coconut or not, and syrup timing—demystified.'},
+      {id:14, title:'Better state with Zustand',          cat:'Tech',   date:'2024-10-18', read:6,  img:'https://images.unsplash.com/photo-1518770660439-4636190af475?q=80&w=1600&auto=format&fit=crop', excerpt:'Tiny, fast, and unopinionated—state without ceremony.'},
+      {id:15, title:'Siwa: salt lakes & silence',         cat:'Travel', date:'2024-09-07', read:5,  img:'https://images.unsplash.com/photo-1519681393784-d120267933ba?q=80&w=1600&auto=format&fit=crop', excerpt:'Float, stargaze, and reset in Egypt’s dreamiest oasis.'},
+      {id:16, title:'Air fryer konafa crisps',            cat:'Food',   date:'2024-08-16', read:2,  img:'https://images.unsplash.com/photo-1514518098880-6d45d23548e6?q=80&w=1600&auto=format&fit=crop', excerpt:'A quick, crunchy hack that still tastes like a holiday.'},
+      {id:17, title:'Web performance budget basics',      cat:'Tech',   date:'2024-07-02', read:7,  img:'https://images.unsplash.com/photo-1556157382-97eda2d62296?q=80&w=1600&auto=format&fit=crop', excerpt:'Define, measure, and enforce budgets so your site stays fast.'},
+      {id:18, title:'Fayoum pottery workshop',            cat:'Travel', date:'2024-06-21', read:4,  img:'https://images.unsplash.com/photo-1523419409543-8a8d68c4e77c?q=80&w=1600&auto=format&fit=crop', excerpt:'Hands-on clay, desert light, and lunch at Tunis village.'},
+    ];
+
+    // --- State --------------------------------------------------------------
+    const state = {
+      q: new URLSearchParams(location.search).get('q') || '',
+      cat: new URLSearchParams(location.search).get('cat') || 'All',
+      page: +(new URLSearchParams(location.search).get('page') || 1),
+      per: +(new URLSearchParams(location.search).get('per') || 6),
+    };
+
+    // --- Helpers ------------------------------------------------------------
+    const $ = (sel, root=document) => root.querySelector(sel);
+    const $$ = (sel, root=document) => Array.from(root.querySelectorAll(sel));
+
+    function fmtDate(iso){
+      const d = new Date(iso);
+      return d.toLocaleDateString(undefined, { year:'numeric', month:'short', day:'numeric' });
+    }
+    function setURL(){
+      const p = new URLSearchParams({ q: state.q, cat: state.cat, page: state.page, per: state.per });
+      history.replaceState(null, '', '?' + p.toString());
+    }
+
+    function filterPosts(){
+      const q = state.q.trim().toLowerCase();
+      return POSTS.filter(p => (state.cat === 'All' || p.cat === state.cat) && (!q || p.title.toLowerCase().includes(q)));
+    }
+
+    function paginate(arr){
+      const total = arr.length;
+      const pages = Math.max(1, Math.ceil(total / state.per));
+      const page = Math.min(Math.max(1, state.page), pages);
+      const slice = arr.slice((page-1)*state.per, page*state.per);
+      return { total, pages, page, slice };
+    }
+
+    // --- Render -------------------------------------------------------------
+    const grid = $('#grid');
+    const meta = $('#meta');
+    const pagi = $('#pagi');
+    const footInfo = $('#footInfo');
+
+    function render(){
+      setURL();
+      grid.setAttribute('aria-busy','true');
+      const filtered = filterPosts();
+      const { total, pages, page, slice } = paginate(filtered);
+
+      // meta info
+      meta.textContent = `${total} post${total!==1?'s':''}${state.cat!=='All'?` in ${state.cat}`:''}${state.q?` • search: "${state.q}"`:''}`;
+
+      // cards
+      grid.innerHTML = '';
+      const tpl = $('#cardTpl');
+      if(slice.length === 0){
+        const empty = document.createElement('div');
+        empty.className = 'card';
+        empty.style.gridColumn = 'span 12';
+        empty.innerHTML = `<div class="content"><h3 class="title">No results</h3><p class="excerpt">Try a different keyword or category.</p></div>`;
+        grid.appendChild(empty);
+      } else {
+        slice.forEach(p => {
+          const node = tpl.content.cloneNode(true);
+          $('[data-badge]', node).textContent = p.cat;
+          const img = $('[data-img]', node);
+          img.src = p.img; img.alt = p.title;
+          $('[data-title]', node).textContent = p.title;
+          $('[data-excerpt]', node).textContent = p.excerpt;
+          $('[data-date]', node).textContent = fmtDate(p.date);
+          $('[data-read]', node).textContent = `${p.read} min read`;
+          grid.appendChild(node);
+        });
+      }
+      grid.setAttribute('aria-busy','false');
+
+      // pagination
+      pagi.innerHTML = '';
+      const mk = (label, opts={}) => {
+        const b = document.createElement('button');
+        b.className = 'page'; b.textContent = label;
+        if(opts.disabled) b.setAttribute('disabled','');
+        if(opts.active) b.classList.add('active');
+        b.addEventListener('click', opts.onClick || (()=>{}));
+        return b;
+      };
+      const prev = mk('Prev', { disabled: page<=1, onClick(){ state.page = Math.max(1, page-1); render(); }});
+      const next = mk('Next', { disabled: page>=pages, onClick(){ state.page = Math.min(pages, page+1); render(); }});
+      pagi.appendChild(prev);
+
+      const windowSize = 5; // show up to 5 page numbers
+      const start = Math.max(1, page - Math.floor(windowSize/2));
+      const end = Math.min(pages, start + windowSize - 1);
+      for(let i=start;i<=end;i++){
+        const btn = mk(String(i), { active: i===page, onClick(){ state.page = i; render(); }});
+        pagi.appendChild(btn);
+      }
+      pagi.appendChild(next);
+
+      footInfo.textContent = `Showing ${(slice.length?((page-1)*state.per+1):0)}–${(page-1)*state.per + slice.length} of ${total}`;
+
+      // update active category pill
+      $$('.pill').forEach(p => p.classList.toggle('active', p.dataset.cat === state.cat));
+
+      // update selects/inputs (in case changed via URL)
+      $('#q').value = state.q;
+      $('#per').value = String(state.per);
+    }
+
+    // --- Events -------------------------------------------------------------
+    // Category switching
+    $$('.pill').forEach(p => p.addEventListener('click', () => {
+      state.cat = p.dataset.cat;
+      state.page = 1; // reset page on new filter
+      render();
+    }));
+
+    // Search (debounced)
+    const qInput = $('#q');
+    let qTid; qInput.addEventListener('input', () => {
+      clearTimeout(qTid);
+      qTid = setTimeout(() => { state.q = qInput.value; state.page = 1; render(); }, 220);
+    });
+
+    // Per-page selector
+    $('#per').addEventListener('change', (e) => {
+      state.per = +e.target.value; state.page = 1; render();
+    });
+
+    // Initialize from URL
+    render();
+  </script>
+</body>
+</html>
