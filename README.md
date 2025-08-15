@@ -15,12 +15,3 @@ It opens and closes with a toggle button, includes a logo placeholder, and a lis
 - CSS
 - JavaScript
 
-## How to Use
-1. Clone the repo
-2. Open `index.html` in a browser
-3. Click the toggle button to open/close the sidebar
-
-## Demo
-Add a GIF or screenshot here.
-
----
